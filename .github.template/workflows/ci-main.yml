@@ -1,0 +1,82 @@
+name: Main CI
+
+on:
+  push:
+    branches:
+      - main
+
+# Read permissions needed for nx-set-shas within nx-cloud-main.yml, when run on the main branch
+permissions:
+  actions: read
+  # Write permission needed for nx-semantic-release to create releases
+  contents: write
+  # Write permission needed for nx-semantic-release to create packages
+  packages: write
+  # Write permissions needed for deployment to GitHub Pages
+  pages: write
+  id-token: write
+
+jobs:
+  main:
+    if: contains(github.event.head_commit.message, 'chore(release)') != true
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      # Cache node_modules
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 'lts/*'
+          cache: 'npm'
+      - run: npm ci
+      - uses: nrwl/nx-set-shas@v3
+
+      - run: npx nx-cloud record -- nx format:check
+      - run: npx nx affected -t lint,test --parallel=3
+      # Skip Nx cache for build to upload accurate version for deployment
+      - run: npx nx affected -t build --parallel=3 --skip-nx-cache
+
+      - uses: actions/configure-pages@v3
+      - if: ${{ hashFiles('./dist/project-template/') != '' }}
+        uses: actions/upload-pages-artifact@v2
+        with:
+          # Upload dist repository
+          path: './dist/project-template'
+
+  release:
+    needs: main
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      # Cache node_modules
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 'lts/*'
+          cache: 'npm'
+      - run: npm ci
+      - uses: nrwl/nx-set-shas@v3
+
+      - name: Generate a token
+        id: generate_token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
+      - run: HUSKY=0 npx nx affected -t semantic-release --parallel=1
+        env:
+          GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
+          NPM_TOKEN: ${{ steps.generate_token.outputs.token }}
+          NODE_AUTH_TOKEN: ${{ steps.generate_token.outputs.token }}
+
+  deploy-pages:
+    needs: release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/deploy-pages@v2
+        id: deployment

@@ -1,0 +1,43 @@
+{
+  "name": "tailwind",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/shared/tailwind/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/vite:build",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/shared/tailwind"
+      }
+    },
+    "test": {
+      "executor": "@nx/vite:test",
+      "outputs": ["{options.reportsDirectory}"],
+      "options": {
+        "passWithNoTests": true,
+        "reportsDirectory": "../../../coverage/libs/shared/tailwind"
+      }
+    },
+    "lint": {
+      "executor": "@nx/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": [
+          "libs/shared/tailwind/**/*.ts",
+          "libs/shared/tailwind/package.json"
+        ]
+      }
+    },
+    "semantic-release": {
+      "executor": "@theunderscorer/nx-semantic-release:semantic-release",
+      "dependsOn": ["build"],
+      "options": {
+        "outputPath": "dist/libs/shared/tailwind",
+        "npm": true,
+        "tagFormat": "tailwind-v${VERSION}"
+      }
+    }
+  },
+  "tags": ["type:ui", "scope:shared"]
+}

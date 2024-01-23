@@ -1,0 +1,16 @@
+version: '3'
+
+services:
+  project-template:
+    image: project-template/project-template:latest
+    container_name: project-template
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    ports:
+      - '4200:4200'
+    volumes:
+      - .:/app
+      - /app/node_modules
+    environment:
+      - CHOKIDAR_USEPOLLING=true # To fix an issue with HMR on Windows machines

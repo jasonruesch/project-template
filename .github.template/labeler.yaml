@@ -1,0 +1,25 @@
+---
+area/src:
+  - 'src/**/*'
+area/e2e:
+  - 'e2e/**/*'
+area/libs:
+  - 'libs/**/*'
+scope/project-template:
+  - src/**/*
+scope/shared:
+  - libs/shared/**/*
+type/ui:
+  - libs/**/ui/*
+  - libs/**/ui-*/*
+type/data-access:
+  - libs/**/data-access/*
+  - libs/**/data-access-*/*
+type/util:
+  - libs/**/util/*
+  - libs/**/util-*/*
+dep-updates:
+  - package.json
+  - package-lock.json
+devops:
+  - .github/workflows/*

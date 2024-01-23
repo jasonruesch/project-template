@@ -1,0 +1,125 @@
+{
+  "name": "project-template",
+  "$schema": "node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "./src",
+  "projectType": "application",
+  "targets": {
+    "build": {
+      "executor": "@nx/vite:build",
+      "outputs": ["{options.outputPath}"],
+      "defaultConfiguration": "production",
+      "options": {
+        "outputPath": "dist/project-template"
+      },
+      "configurations": {
+        "development": {
+          "mode": "development"
+        },
+        "production": {
+          "mode": "production"
+        }
+      }
+    },
+    "serve": {
+      "executor": "@nx/vite:dev-server",
+      "defaultConfiguration": "development",
+      "options": {
+        "buildTarget": "project-template:build"
+      },
+      "configurations": {
+        "development": {
+          "buildTarget": "project-template:build:development",
+          "hmr": true
+        },
+        "production": {
+          "buildTarget": "project-template:build:production",
+          "hmr": false
+        }
+      }
+    },
+    "preview": {
+      "executor": "@nx/vite:preview-server",
+      "defaultConfiguration": "development",
+      "options": {
+        "buildTarget": "project-template:build"
+      },
+      "configurations": {
+        "development": {
+          "buildTarget": "project-template:build:development"
+        },
+        "production": {
+          "buildTarget": "project-template:build:production"
+        }
+      }
+    },
+    "test": {
+      "executor": "@nx/vite:test",
+      "outputs": ["{options.reportsDirectory}"],
+      "options": {
+        "reportsDirectory": "coverage/project-template"
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["./src"]
+      }
+    },
+    "container": {
+      "executor": "@nx-tools/nx-container:build",
+      "dependsOn": ["build"],
+      "defaultConfiguration": "production",
+      "options": {
+        "engine": "docker",
+        "metadata": {
+          "images": ["ghcr.io/project-template/project-template"],
+          "load": true,
+          "push": true,
+          "tags": [
+            "type=schedule",
+            "type=ref,event=branch",
+            "type=ref,event=tag",
+            "type=ref,event=pr",
+            "type=sha,prefix=sha-"
+          ]
+        }
+      },
+      "configurations": {
+        "development": {
+          "file": "Dockerfile",
+          "metadata": {
+            "images": ["project-template/project-template"],
+            "push": false,
+            "tags": ["type=sha,prefix=sha-"]
+          }
+        },
+        "production": {
+          "file": "Dockerfile.prod",
+          "metadata": {
+            "images": ["ghcr.io/project-template/project-template"],
+            "load": true,
+            "push": true,
+            "cache-from": ["type=gha"],
+            "cache-to": ["type=gha,mode=max"],
+            "tags": [
+              "type=ref,event=branch",
+              "type=ref,event=tag",
+              "type=sha",
+              "type=sha,format=long",
+              "latest"
+            ]
+          }
+        }
+      }
+    },
+    "semantic-release": {
+      "executor": "@theunderscorer/nx-semantic-release:semantic-release",
+      "options": {
+        "npm": false,
+        "tagFormat": "project-template-v${VERSION}"
+      }
+    }
+  },
+  "tags": ["type:app", "scope:project-template"]
+}

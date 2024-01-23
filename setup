@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+
+echo "What would you like to name your project?"
+read -p "Project Name: " project_name
+initial_project_id=$(echo "${project_name}" | tr '[:upper:]' '[:lower:]' | sed -e 's/ /-/g')
+read -p "Project ID (${initial_project_id}): " project_id
+
+# TODO: Validate project_id
+
+if [ -z "$project_id" ]; then
+  project_id=${initial_project_id}
+fi
+
+while IFS= read -r -d '' -u 9
+do
+  echo "Processing $REPLY"
+  sed -i '' -e "s/Project Template/${project_name}/g" "$REPLY"
+  sed -i '' -e "s/project-template/${project_id}/g" "$REPLY"
+done 9< <( find . ! -name 'setup' ! -name 'README.md' ! -path '*.DS_Store' ! -path '*.git*' ! -path '*node_modules/*' ! -path './.nx/cache/*' ! -path '*.ico*' -type f -exec printf '%s\0' {} + )
+
+# Clean up / implode
+rm README.md
+mv README_TEMPLATE.md README.md
+mv .github.template .github
+rm setup

@@ -1,0 +1,52 @@
+name: Tag CI
+
+on:
+  push:
+    tags:
+      - '**'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.ref }}
+  cancel-in-progress: true
+
+env:
+  # Needed to remove the uknown/unknown OS/Arch from the docker container manifest
+  BUILDX_NO_DEFAULT_ATTESTATIONS: 1
+
+# Read permissions needed for nx-set-shas within nx-cloud-main.yml, when run on the main branch
+permissions:
+  actions: read
+  # Write permission needed for nx-semantic-release to create releases
+  contents: write
+  # Write permission needed for nx-semantic-release to create packages
+  packages: write
+
+jobs:
+  docker-publish:
+    runs-on: ubuntu-latest
+    env:
+      INPUT_PUSH: true
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: docker/setup-buildx-action@v2
+      - uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      # Cache node_modules
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 'lts/*'
+          cache: 'npm'
+      - run: npm ci
+      - uses: nrwl/nx-set-shas@v3
+
+      - run: npx nx affected -t container --parallel=1
+        env:
+          INPUT_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
